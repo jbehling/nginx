@@ -5,21 +5,22 @@
   - nginx restart
 
 - name: Create Directory (/var/www/rajudemo.com/html)  
-  file: path=/var/www/rajudemo.com/html state=directory 
-
-- name: Create Directory (/var/www/rajugtest.com/html)  
-  file: path=/var/www/rajutest.com/html state=directory 
+  file: path="/var/www/{{item}}/html" state=directory mode=755 owner=www-data group=www-data
+  with_items:
+    - rajutest.com
+    - rajudemo.com
 
 - name: insert rajudemo.com home page 
-  template: src=index.html.j2 dest=/var/www/rajudemo.com/html/index.html
+  template: src=index.html.j2 dest=/var/www/rajudemo.com/html/index.html owner=www-data group=www-data mode=755
 
 - name: insert rajutest.com home page. 
-  template: src=index2.html.j2 dest=/var/www/rajutest.com/html/index.html 
-  
-- name: www directory permission (755)
-  file: path=/var/www mode=755
-  notify: 
-  - nginx restart
+  template: src=index2.html.j2 dest=/var/www/rajutest.com/html/index.html owner=www-data group=www-data mode=755
+
+  # 
+  # - name: www directory permission (755)
+  #   file: path=/var/www mode=755  
+  #   notify: 
+  #   - nginx restart
 
 - name: insert rajudemo.com config file (/etc/nginx/sites-available/)
   template: src=rajudemo.j2 dest=/etc/nginx/sites-available/rajudemo
@@ -29,7 +30,9 @@
   
 - name: enable rajudemo.com config file (/etc/nginx/sites-enable/)
   file: src=/etc/nginx/sites-available/rajudemo dest=/etc/nginx/sites-enabled/rajudemo state=link 
-  
+  notify:
+  - nginx restart 
+
 - name: enable rajudemo.com config file(/etc/nginx/sites-enable/)
   file: src=/etc/nginx/sites-available/rajutest dest=/etc/nginx/sites-enabled/rajutest state=link
   notify: 
@@ -37,12 +40,10 @@
 
 - name: Remove web Server nginx default sites-available config file.
   file: path=/etc/nginx/sites-available/default state=absent
+  notify:
+  - nginx restart
 
 - name: Remove web Server nginx default sites-enabled config file. 
   file: path=/etc/nginx/sites-enabled/default state=absent
   notify: 
   - nginx restart
- 
-
-
-
